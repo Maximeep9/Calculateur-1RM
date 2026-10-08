@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="1RM Force">
+<title>Calculateur 1RM Force</title>
+<style>
+:root{--bg:#0f172a;--card:#172033;--text:#f8fafc;--muted:#94a3b8;--accent:#60a5fa;--border:#334155}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Arial,sans-serif;padding:20px}
+main{max-width:620px;margin:auto}
+h1{font-size:28px;margin:6px 0}
+.sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin:14px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+label{display:block;color:#cbd5e1;font-size:14px;margin-bottom:6px}
+input{width:100%;height:52px;border:1px solid #475569;border-radius:12px;background:#0b1220;color:white;padding:0 14px;font-size:20px}
+.result{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.metric{background:#111827;border:1px solid var(--border);border-radius:14px;padding:14px}
+.metric small{display:block;color:var(--muted);font-size:12px}
+.metric strong{display:block;font-size:32px;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 6px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{color:var(--muted);font-size:12px}
+.note{color:var(--muted);font-size:13px;line-height:1.45}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1f2937;border:1px solid var(--border);font-weight:700}
+@media(max-width:520px){
+  .grid,.result{grid-template-columns:1fr}
+  th:nth-child(3),td:nth-child(3){display:none}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>Calculateur 1RM + RIR</h1>
+  <p class="sub">Entre ta série et les reps qu’il te restait. Le site calcule ton 1RM estimé et tes charges de travail.</p>
+
+  <section class="card">
+    <div class="grid">
+      <div class="full">
+        <label for="exercise">Exercice</label>
+        <input id="exercise" value="Développé couché" placeholder="Ex : adducteurs machine">
+      </div>
+      <div>
+        <label for="weight">Poids utilisé (kg)</label>
+        <input id="weight" type="number" inputmode="decimal" step="0.5" value="85">
+      </div>
+      <div>
+        <label for="reps">Répétitions faites</label>
+        <input id="reps" type="number" inputmode="numeric" step="1" value="6">
+      </div>
+      <div class="full">
+        <label for="rir">Répétitions restantes possibles (RIR)</label>
+        <input id="rir" type="number" inputmode="numeric" step="1" value="0">
+      </div>
+    </div>
+  </section>
+
+  <section class="result">
+    <div class="metric">
+      <small>Reps potentielles à l’échec</small>
+      <strong id="total">6</strong>
+    </div>
+    <div class="metric">
+      <small>1RM estimé</small>
+      <strong id="rm">102,0 kg</strong>
+    </div>
+  </section>
+
+  <section class="card">
+    <table>
+      <thead>
+        <tr><th>% 1RM</th><th>Poids</th><th>Utilité</th><th>Reps × séries</th></tr>
+      </thead>
+      <tbody id="zones"></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <strong>Progression force simple</strong>
+    <p class="note">
+      Sur les gros mouvements, travaille surtout entre <b>75 et 85 %</b>.
+      Exemple : fais <b>4 séries de 3 à 6 reps</b>. Quand tu réussis <b>4×6 proprement</b>,
+      augmente la charge à la séance suivante : environ <b>+2 à 2,5 kg</b> sur le haut du corps
+      et <b>+2,5 à 5 kg</b> sur le bas du corps. Puis repars vers 4×3–4.
+    </p>
+  </section>
+
+  <section class="card">
+    <p class="note">
+      Formule utilisée : <b>Epley</b> avec reps potentielles = reps faites + RIR.<br>
+      1RM ≈ poids × (1 + reps potentielles / 30).<br><br>
+      Pour les machines et les exercices d’isolation, utilise surtout ce 1RM comme repère de progression,
+      pas forcément comme un vrai max à tester.
+    </p>
+  </section>
+</main>
+
+<script>
+(function(){
+  const weight=document.getElementById('weight');
+  const reps=document.getElementById('reps');
+  const rir=document.getElementById('rir');
+  const rm=document.getElementById('rm');
+  const total=document.getElementById('total');
+  const zones=document.getElementById('zones');
+
+  const data=[
+    [60,'Endurance / technique','10–15 × 3–4'],
+    [65,'Endurance + hypertrophie','8–12 × 3–4'],
+    [70,'Hypertrophie / volume','8–12 × 3–5'],
+    [75,'Hypertrophie + force','6–10 × 3–5'],
+    [80,'Force + masse','4–6 × 4–5'],
+    [85,'Force','3–5 × 4–6'],
+    [90,'Force maximale','1–3 × 3–5'],
+    [95,'Spécifique 1RM','1 × 1–3']
+  ];
+
+  function num(el){
+    const v=Number(String(el.value).replace(',','.'));
+    return Number.isFinite(v)?v:0;
+  }
+  function round05(x){return Math.round(x*2)/2}
+  function fmt(x){return x.toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1})}
+
+  function calc(){
+    const w=Math.max(0,num(weight));
+    const r=Math.max(0,Math.round(num(reps)));
+    const reserve=Math.max(0,Math.round(num(rir)));
+
+    if(!w || r<1){
+      rm.textContent='—';
+      total.textContent='—';
+      zones.innerHTML='';
+      return;
+    }
+
+    const t=r+reserve;
+    const oneRM=w*(1+t/30);
+
+    total.textContent=t;
+    rm.textContent=fmt(oneRM)+' kg';
+
+    zones.innerHTML=data.map(row=>{
+      const load=round05(oneRM*row[0]/100);
+      return '<tr>'+
+        '<td><span class="badge">'+row[0]+'%</span></td>'+
+        '<td><b>'+fmt(load)+' kg</b></td>'+
+        '<td>'+row[1]+'</td>'+
+        '<td>'+row[2]+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  [weight,reps,rir].forEach(el=>el.addEventListener('input',calc));
+  calc();
+})();
+</script>
+</body>
+</html>
